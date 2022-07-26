@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/KyeongsooLee/bookings/pkg/config"
-	"github.com/KyeongsooLee/bookings/pkg/handlers"
-	"github.com/KyeongsooLee/bookings/pkg/render"
+	"github.com/KyeongsooLee/bookings/internal/config"
+	"github.com/KyeongsooLee/bookings/internal/handlers"
+	"github.com/KyeongsooLee/bookings/internal/render"
 	"github.com/alexedwards/scs/v2"
 )
 
@@ -50,5 +50,7 @@ func main() {
 	}
 
 	err = srv.ListenAndServe()
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

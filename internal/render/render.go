@@ -2,13 +2,15 @@ package render
 
 import (
 	"bytes"
+
 	"log"
 	"net/http"
 	"path/filepath"
 	"text/template"
 
-	"github.com/KyeongsooLee/bookings/pkg/config"
-	"github.com/KyeongsooLee/bookings/pkg/models"
+	"github.com/KyeongsooLee/bookings/internal/config"
+	"github.com/KyeongsooLee/bookings/internal/models"
+	"github.com/justinas/nosurf"
 )
 
 var functions = template.FuncMap{
@@ -23,13 +25,13 @@ func NewTemplates(a *config.AppConfig){
 }
 
 
-func AddDefaultData(td *models.TemplateData) *models.TemplateData {
-	
+func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
 // RenderTemplate renders templates using html/template
-func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 	
 	if app.UseCache {
@@ -46,7 +48,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 
 	buf := new(bytes.Buffer)
 
-	td = AddDefaultData(td)
+	td = AddDefaultData(td, r)
 
 	_ = t.Execute(buf, td)
 
@@ -60,7 +62,6 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 
 func CreateTemplateCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
-
 	// get all of the files named *.page.tmpl from ./templates
 	pages, err := filepath.Glob("./templates/*.page.tmpl")
 	if err != nil {
@@ -70,7 +71,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 	// range through all files ending with *.page.tmpl
 	for _, page := range pages {
 		name := filepath.Base(page)
-		ts, err := template.New(name).ParseFiles(page)
+		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
 			return myCache, err
 		}
